@@ -1,4 +1,4 @@
-<?php /* Template Name: Test */ ?>
+<?php /* Template Name: Test-Blog */ ?>
 
 <?php get_header('small'); ?>
 
@@ -6,6 +6,7 @@
 global $wp;
 $current_url = home_url(add_query_arg(NULL, NULL));
 $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+$action = '/' . $post->post_name . '/?paged=1';
 
 $args = array(
     'posts_per_page' => 3,
@@ -46,8 +47,18 @@ $dates = [
     '12' => 'December',
 ];
 
+$categories = get_categories();
+$category = NULL;
+if (isset($_GET['category'])) {
+    $category = $_GET['category'];
+    if ($_GET['category'] !== '') {
+        $args['category_name'] = $category;
+    }
+}
+
 $query = new WP_Query();
 $posts = $query->query($args);
+$posts_amount = $query->found_posts ;
 ?>
 
 <main class="blog-main">
@@ -55,6 +66,9 @@ $posts = $query->query($args);
     <section class="section-filters">
         <div class="filters-panel">
             <form class="filter-date">
+                <input type="hidden" name="search" value="<?php echo $search ?>" />
+                <input type="hidden" name="category" value="<?php echo $category ?>" />
+                <input type="hidden" name="paged" value="1" />
                 <?php if (!empty($dates)) : ?>
                     <select class="filter-select" name="date">
                         <?php foreach ($dates as $key => $value) : ?>
@@ -63,40 +77,50 @@ $posts = $query->query($args);
                     </select>
                 <?php endif ?>
             </form>
-
-            <form class="filter-search">
-                <input class="filter-input" type="text" name="search" placeholder="<?php _e('Rechercher...', 'theme') ?>" />
+            <form class="filter-search" action="<?php echo $current_url ?>">
+                <input type="hidden" name="date" value="<?php echo $date ?>" />
+                <input type="hidden" name="category" value="<?php echo $category ?>" />
+                <input type="hidden" name="paged" value="1" />
+                <input class="filter-input" type="text" name="search" placeholder="<?php _e('Rechercher...', 'theme') ?>" value="<?php echo $search ?>" />
                 <button class="filter-btn"><?php insertImage('/icons/search.svg') ?></button>
             </form>
-
-            <?php $categories = get_categories(); ?>
-            <ul class="cat-list">
-                <li><a class="cat-list_item active" href="#!" data-slug="">All cars</a></li>
-                <?php foreach ($categories as $category) : ?>
-                    <li>
-                        <a class="cat-list_item" href="#!" data-slug="<?= $category->slug; ?>">
-                            <?= $category->name; ?>
-                        </a>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
+            <form class="filter-category">
+                <input type="hidden" name="search" value="<?php echo $search ?>" />
+                <input type="hidden" name="date" value="<?php echo $date ?>" />
+                <input type="hidden" name="paged" value="1" />
+                <?php if (!empty($categories)) : ?>
+                    <select class="filter-select" name="category">
+                        <option value="" selected>All categories</option>
+                        <?php foreach ($categories as $cat) : ?>
+                            <option value="<?php echo $cat->name; ?>" <?php if ($cat->name == $category) : ?> selected <?php endif ?>><?php _e($cat->name, 'theme') ?></option>
+                        <?php endforeach ?>
+                    </select>
+                <?php endif ?>
+            </form>
         </div>
     </section>
-    <?php if (!empty($posts)) : ?>
-        <div class="posts-wrapper__test">
-            <?php foreach ($posts as $post) : ?>
-                <?php get_template_part('views/partials/post-card'); ?>
-            <?php endforeach ?>
-        </div>
-    <?php else : ?>
-        <div class="posts-nothing">
-            <h2 class="events-nothing__title title-regular"><?php _e('Nothing found', 'theme') ?></h2>
-        </div>
-    <?php endif ?>
+    <section class="section-posts">
+        <h4 class="section-posts__sub-title sub-title_default">Tout savoir sur</h4>
+        <h3 class="section-posts__title title_default">Nos actualités & évenements</h3>
+        <?php if (!empty($posts)) : ?>
+            <div class="posts-wrapper">
+                <?php foreach ($posts as $post) : ?>
+                    <?php get_template_part('views/partials/post-card'); ?>
+                <?php endforeach ?>
+            </div>
+            <?php if ($posts_amount > 3) : ?>
+                <div class="btn__wrapper">
+                    <a href="#!" class="contact-btn contact-btn_black" data-search="<?php echo $search; ?>" data-date="<?php echo $date; ?>" data-category="<?php echo $category; ?>" id="load-more">Load more</a>
+                </div>
+            <?php endif ?>
+        <?php else : ?>
+            <div class="posts-nothing">
+                <h2 class="events-nothing__title">Rien n'a été trouvé</h2>
+            </div>
+        <?php endif ?>
+    </section>
+
     <?php wp_reset_postdata(); ?>
-    <div class="btn__wrapper">
-        <a href="#!" class="contact-btn contact-btn_black" data-search="<?php echo $search; ?>" data-date="<?php echo $date; ?>" id="load-more">Load more</a>
-    </div>
 </main>
 
 <?php get_footer(); ?>

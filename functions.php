@@ -67,20 +67,9 @@ function register_post_types()
 	]);
 }
 
-
 add_action('after_setup_theme', 'kaminusok_setup');
 
 add_filter('wpcf7_autop_or_not', '__return_false');
-
-function doublee_filter_yoast_breadcrumb_output($output)
-{
-	$from = '<span>';
-	$to = '</span>';
-	$output = str_replace($from, $to, $output);
-	return $output;
-}
-
-add_filter('wpseo_breadcrumb_output', 'doublee_filter_yoast_breadcrumb_output');
 
 function shorten_yoast_breadcrumb_title($link_info)
 {
@@ -94,9 +83,7 @@ function shorten_yoast_breadcrumb_title($link_info)
 
 add_filter('wpseo_breadcrumb_single_link_info', 'shorten_yoast_breadcrumb_title', 10);
 
-
-/* Ajax handler for posts */
-function ajax_filter_posts_scripts()
+function filter_posts_scripts()
 {
 	global $wp_query;
 	wp_register_script('afp', _TP_ . '/src/js/afp.js', array('jquery'), false, null, false);
@@ -111,15 +98,14 @@ function ajax_filter_posts_scripts()
 	);
 }
 
-add_action('wp_enqueue_scripts', 'ajax_filter_posts_scripts', 1);
+add_action('wp_enqueue_scripts', 'filter_posts_scripts', 1);
+
 
 function weichie_load_more()
 {
 	$ajaxposts = new WP_Query([
 		'post_type' => 'post',
 		'posts_per_page' => 3,
-		'orderby' => 'date',
-		'order' => 'DESC',
 		'paged' => $_POST['paged'],
 		's' => $_POST['search'],
 		'date_query' => [
@@ -150,41 +136,6 @@ function weichie_load_more()
 	echo json_encode($result);
 	exit;
 }
+
 add_action('wp_ajax_weichie_load_more', 'weichie_load_more');
 add_action('wp_ajax_nopriv_weichie_load_more', 'weichie_load_more');
-
-
-function filter_projects()
-{
-	$catSlug = $_POST['category'];
-
-	$ajaxposts = new WP_Query([
-		'post_type' => 'post',
-		'posts_per_page' => 3,
-		'orderby' => 'date',
-		'order' => 'DESC',
-		'category_name' => $catSlug,
-	]);
-
-	$response = '';
-
-	if ($ajaxposts->have_posts()) {
-		ob_start();
-		while ($ajaxposts->have_posts()) : $ajaxposts->the_post();
-			$response .= get_template_part('views/partials/post-card');
-		endwhile;
-		$output = ob_get_contents();
-		ob_end_clean();
-	} else {
-		$response = '';
-	}
-
-	$result = [
-		'html' => $output,
-	];
-
-	echo json_encode($result);
-	exit;
-}
-add_action('wp_ajax_filter_projects', 'filter_projects');
-add_action('wp_ajax_nopriv_filter_projects', 'filter_projects');
